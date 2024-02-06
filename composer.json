@@ -1,0 +1,24 @@
+{
+    "name":"brianhenryie/composer-fallback-to-git",
+    "autoload": {
+        "psr-4": {
+            "BrianHenryIE\\ComposerFallbackToGit\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BrianHenryIE\\ComposerFallbackToGit\\": "test"
+        }
+    },
+    "require": {
+        "composer-plugin-api": "^2.0"
+    },
+    "require-dev": {
+        "composer/composer": "^2.6",
+        "phpunit/phpunit": "^10.0"
+    },
+    "type": "composer-plugin",
+    "extra": {
+        "class": "BrianHenryIE\\ComposerFallbackToGit\\FallbackPlugin"
+    }
+}
