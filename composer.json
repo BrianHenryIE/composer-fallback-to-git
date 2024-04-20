@@ -15,7 +15,7 @@
     },
     "require-dev": {
         "composer/composer": "^2.6",
-        "phpunit/phpunit": "^10.0"
+        "phpunit/phpunit": "^9.0"
     },
     "type": "composer-plugin",
     "extra": {
