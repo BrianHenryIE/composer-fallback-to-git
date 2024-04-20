@@ -39,6 +39,11 @@ class FallbackPlugin implements PluginInterface
                 continue;
             }
 
+            // Ignore packages that could not possibly correlate with a GitHub repo.
+            if( false === stripos( $name, '/' ) ) {
+                continue;
+            }
+
             $response = $httpDownloader->get("https://github.com/$name");
 
             if( $response->getStatusCode() !== 200 ) {
