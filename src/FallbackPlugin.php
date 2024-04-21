@@ -22,7 +22,10 @@ class FallbackPlugin implements PluginInterface
             'url' => 'https://repo.packagist.org',
         ), $io, $config,$httpDownloader);
 
-        $composerRequires = $composer->getPackage()->getRequires();
+        $composerRequires = array_merge(
+			$composer->getPackage()->getRequires(),
+	        $composer->getPackage()->getDevRequires()
+        );
 
         $missingPackages = array();
 
