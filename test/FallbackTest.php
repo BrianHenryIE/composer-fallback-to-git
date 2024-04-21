@@ -7,7 +7,6 @@ class FallbackTest extends IntegrationTestCase {
 	public function setUp(): void {
 		parent::setUp();
 
-
 		$projectDirectory = realpath(getcwd().'/..');
 
 		$composerJsonString = <<<EOD
@@ -34,8 +33,7 @@ EOD;
 
 		$this->runComposer("composer install");
 		$this->runComposer("composer config allow-plugins.brianhenryie/composer-fallback-to-git true");
-		$this->runComposer("composer require brianhenryie/composer-fallback-to-git:dev-main");
-
+		$this->runComposer("composer require brianhenryie/composer-fallback-to-git:dev-main --dev");
 	}
 
     public function test_one(): void {
@@ -67,5 +65,17 @@ EOD;
 		$this->runComposer("composer require wpackagist-plugin/document-generator-for-openapi:*");
 
 		self::assertDirectoryExists($this->testsWorkingDir . 'wp-content/plugins/document-generator-for-openapi');
+	}
+	public function test_no_composerjson_in_github_repo(): void {
+
+		$exitCodeResult = $this->runComposer("composer require wordpress/wordpress:* --dev");
+
+		// Unwanted:
+		//   No valid composer.json was found in any branch or tag of https://github.com/wordpress/wordpress, could not load a package from it.
+
+		// Expected:
+		//     - Root composer.json requires wordpress/wordpress, it could not be found in any version, there may be a typo in the package name.
+
+		self::markTestIncomplete('unsure how to write the assertion!');
 	}
 }

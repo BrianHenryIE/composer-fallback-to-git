@@ -64,7 +64,18 @@ class FallbackPlugin implements PluginInterface
                 "type"=> "git"],
                 $name
             );
-            $composer->getRepositoryManager()->addRepository($repository);
+
+			try {
+				$is_in_repository = $repository->findPackage( $name, $missingPackage->getConstraint() );
+			}catch (\Exception $e){
+				$is_in_repository = false;
+			}
+
+			if( $is_in_repository ) {
+				$composer->getRepositoryManager()->addRepository( $repository );
+
+				$io->write("Using https://github.com/{$name} for {$name}.");
+			}
         }
     }
 

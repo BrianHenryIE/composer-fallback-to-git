@@ -44,7 +44,7 @@ class IntegrationTestCase extends TestCase
         try {
             $composer = new Composer();
             $composer->setAutoExit(false);
-            $composer->run(new ArgvInput(explode(' ', $command)));
+            return $composer->run(new ArgvInput(explode(' ', $command)));
         }catch( \Exception $exception ) {
             self::fail( $exception->getMessage());
         }
