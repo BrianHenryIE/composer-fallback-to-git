@@ -30,6 +30,7 @@ class FallbackPlugin implements PluginInterface
         $missingPackages = array();
 
         foreach( $composerRequires as $name => $composerRequire ) {
+			// TODO: This should check all custom repositories, not just Packagist.
             $onPackagist = $composerRepository->findPackage($name,$composerRequire->getConstraint());
             if( ! $onPackagist ) {
                 $missingPackages[$name] = $composerRequire;
@@ -47,7 +48,11 @@ class FallbackPlugin implements PluginInterface
                 continue;
             }
 
-            $response = $httpDownloader->get("https://github.com/$name");
+            try {
+                $response = $httpDownloader->get("https://github.com/$name");
+            } catch (\Exception $e) {
+                continue;
+            }
 
             if( $response->getStatusCode() !== 200 ) {
                 continue;
