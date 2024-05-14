@@ -13,14 +13,10 @@ class FallbackPlugin implements PluginInterface
     public function activate(Composer $composer, IOInterface $io)
     {
 
-        // Figure out what packages are not available on Packagist
+        // Figure out what packages are not available on Packagist/other configured repositories.
 
-        $config =  $composer->getConfig();
+        $config = $composer->getConfig();
         $httpDownloader = Factory::createHttpDownloader($io, $config);
-        $composerRepository = new ComposerRepository(array (
-            'type' => 'composer',
-            'url' => 'https://repo.packagist.org',
-        ), $io, $config,$httpDownloader);
 
         $composerRequires = array_merge(
 			$composer->getPackage()->getRequires(),
@@ -30,8 +26,12 @@ class FallbackPlugin implements PluginInterface
         $missingPackages = array();
 
         foreach( $composerRequires as $name => $composerRequire ) {
-			// TODO: This should check all custom repositories, not just Packagist.
-            $onPackagist = $composerRepository->findPackage($name,$composerRequire->getConstraint());
+            $onPackagist = false;
+			foreach($composer->getRepositoryManager()->getRepositories() as $composerRepository) {
+                if($composerRepository->findPackage($name, $composerRequire->getConstraint())){
+                    $onPackagist = true;
+            	}
+			}
             if( ! $onPackagist ) {
                 $missingPackages[$name] = $composerRequire;
             }
@@ -66,6 +66,7 @@ class FallbackPlugin implements PluginInterface
             );
 
 			try {
+				// This should maybe just use '*'.
 				$is_in_repository = $repository->findPackage( $name, $missingPackage->getConstraint() );
 			}catch (\Exception $e){
 				$is_in_repository = false;
