@@ -1,6 +1,12 @@
 <?php
+/**
+ * @see \BrianHenryIE\ComposerFallbackToGit\FallbackPlugin
+ */
 
 namespace BrianHenryIE\ComposerFallbackToGit;
+
+use Composer\Factory;
+use Composer\IO\NullIO;
 
 class FallbackTest extends IntegrationTestCase {
 
@@ -66,16 +72,18 @@ EOD;
 
 		self::assertDirectoryExists($this->testsWorkingDir . 'wp-content/plugins/document-generator-for-openapi');
 	}
+
+	/**
+	 * No valid composer.json was found in any branch or tag of https://github.com/wordpress/wordpress, could not load a package from it.
+     */
 	public function test_no_composerjson_in_github_repo(): void {
 
-		$exitCodeResult = $this->runComposer("composer require wordpress/wordpress:* --dev");
+		$this->runComposer('composer require wordpress/wordpress:* --dev');
 
-		// Unwanted:
-		//   No valid composer.json was found in any branch or tag of https://github.com/wordpress/wordpress, could not load a package from it.
+		$sut = new FallbackPlugin();
 
-		// Expected:
-		//     - Root composer.json requires wordpress/wordpress, it could not be found in any version, there may be a typo in the package name.
+		$sut->activate($this->composer->getComposer(), new NullIO());
 
-		self::markTestIncomplete('unsure how to write the assertion!');
+		self::assertDirectoryExists($this->testsWorkingDir . 'vendor/wordpress/wordpress');
 	}
 }

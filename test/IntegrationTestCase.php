@@ -21,6 +21,8 @@ class IntegrationTestCase extends TestCase
 {
     protected $testsWorkingDir;
 
+	protected Composer $composer;
+
     public function setUp(): void
     {
         parent::setUp();
@@ -36,15 +38,16 @@ class IntegrationTestCase extends TestCase
             $this->deleteDir($this->testsWorkingDir);
         }
 
+	    $this->composer = new Composer();
+	    $this->composer->setAutoExit(false);
+
         @mkdir($this->testsWorkingDir);
     }
 
 
     protected function runComposer(string $command) {
         try {
-            $composer = new Composer();
-            $composer->setAutoExit(false);
-            return $composer->run(new ArgvInput(explode(' ', $command)));
+            return $this->composer->run(new ArgvInput(explode(' ', $command)));
         }catch( \Exception $exception ) {
             self::fail( $exception->getMessage());
         }

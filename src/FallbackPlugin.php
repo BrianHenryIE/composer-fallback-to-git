@@ -22,11 +22,13 @@ class FallbackPlugin implements PluginInterface
 			$composer->getPackage()->getRequires(),
 	        $composer->getPackage()->getDevRequires()
         );
+		unset($composerRequires['brianhenryie/composer-fallback-to-git']);
 
         $missingPackages = array();
 
         foreach( $composerRequires as $name => $composerRequire ) {
-            $onPackagist = false;
+
+	        $onPackagist = false;
 			foreach($composer->getRepositoryManager()->getRepositories() as $composerRepository) {
                 if($composerRepository->findPackage($name, $composerRequire->getConstraint())){
                     $onPackagist = true;
@@ -35,13 +37,10 @@ class FallbackPlugin implements PluginInterface
             if( ! $onPackagist ) {
                 $missingPackages[$name] = $composerRequire;
             }
+			unset($onPackagist);
         }
 
         foreach( $missingPackages as $name => $missingPackage ) {
-
-            if('brianhenryie/composer-fallback-to-git' === $name){
-                continue;
-            }
 
             // Ignore packages that could not possibly correlate with a GitHub repo.
             if( false === stripos( $name, '/' ) ) {
@@ -69,6 +68,7 @@ class FallbackPlugin implements PluginInterface
 				// This should maybe just use '*'.
 				$is_in_repository = $repository->findPackage( $name, $missingPackage->getConstraint() );
 			}catch (\Exception $e){
+				// Fails when there is no composer.json in the repo.
 				$is_in_repository = false;
 			}
 
@@ -76,7 +76,52 @@ class FallbackPlugin implements PluginInterface
 				$composer->getRepositoryManager()->addRepository( $repository );
 
 				$io->write("Using https://github.com/{$name} for {$name}.");
+
+				continue;
 			}
+
+	        $tags = json_decode($httpDownloader->get("https://api.github.com/repos/{$name}/tags")->getBody());
+	        $branches = json_decode($httpDownloader->get("https://api.github.com/repos/{$name}/branches")->getBody());
+
+			$tagNames = array_map(function($tag){
+				return $tag->name;
+			}, $tags);
+			$branchNames = array_map(function($branch){
+				return $branch->name;
+			}, $branches);
+
+			if(in_array($missingPackage->getConstraint()->getPrettyString(), $tagNames)) {
+				$reference = $missingPackage->getConstraint()->getPrettyString();
+			}elseif(in_array($missingPackage->getConstraint()->getPrettyString(), $branchNames)) {
+				$reference = $missingPackage->getConstraint()->getPrettyString();
+			}elseif(!empty( $tags )) {
+				$reference = $tags[0]->name; // The most recent tag.
+			}else {
+				$master = array_filter($branches, function($branch){
+					return $branch->name === 'master';
+				});
+				$main = array_filter($branches, function($branch){
+					return $branch->name === 'main';
+				});
+				$reference = $master ? 'master' : ($main ? 'main' : 'dev-master');
+			}
+
+	        $repository = $composer->getRepositoryManager()->createRepository(
+		        'package',
+		        ["package"=>[
+					"name" => $name,
+					"version" => $reference, // TODO: A little worried about this but let's see does it work.
+			        "source" => [
+						"url"=> "https://github.com/$name",
+		                "type"=> "git",
+				        "reference" => $reference,
+			        ],
+			        "installation-source" => "source",
+	            ]]
+	        );
+			$composer->getRepositoryManager()->addRepository($repository);
+
+	        $io->write("Using https://github.com/{$name} for {$name}.");
         }
     }
 
