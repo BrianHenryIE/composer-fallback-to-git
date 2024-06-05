@@ -7,6 +7,7 @@ use Composer\Factory;
 use Composer\IO\IOInterface;
 use Composer\Plugin\PluginInterface;
 use Composer\Repository\ComposerRepository;
+use Composer\Util\Http\RequestProxy;
 
 class FallbackPlugin implements PluginInterface
 {
@@ -30,9 +31,26 @@ class FallbackPlugin implements PluginInterface
 
 	        $onPackagist = false;
 			foreach($composer->getRepositoryManager()->getRepositories() as $composerRepository) {
+			    /**
+			     * [TypeError]
+			     * Composer\Util\Http\RequestProxy::__construct(): Argument #2 ($auth) must be of type ?string, array given,
+			     * called in phar:///usr/local/bin/composer/src/Composer/Util/Http/ProxyManager.php on line 103
+			     *
+			     * @see RequestProxy
+			     *
+			     * Composer\Repository\ComposerRepository->findPackage() at /home/runner/work/bh-wp-slswc-client/bh-wp-slswc-client/vendor/brianhenryie/composer-fallback-to-git/src/FallbackPlugin.php:33
+			     * BrianHenryIE\ComposerFallbackToGit\FallbackPlugin->activate() at phar:///usr/local/bin/composer/src/Composer/Plugin/PluginManager.php:392
+			     */
+				set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) use ($name, $composerRequire) {
+					echo "\$composerRepository->findPackage( $name, $composerRequire->getConstraint() )){" . PHP_EOL;
+					print_r(debug_backtrace());
+				});
+
                 if($composerRepository->findPackage($name, $composerRequire->getConstraint())){
                     $onPackagist = true;
             	}
+
+				restore_error_handler();
 			}
             if( ! $onPackagist ) {
                 $missingPackages[$name] = $composerRequire;
