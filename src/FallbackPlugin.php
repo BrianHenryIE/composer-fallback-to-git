@@ -44,6 +44,8 @@ class FallbackPlugin implements PluginInterface
 				set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) use ($name, $composerRequire) {
 					echo "\$composerRepository->findPackage( $name, $composerRequire->getConstraint() )){" . PHP_EOL;
 					print_r(debug_backtrace());
+					// Don't execute PHP internal error handler.
+					return true;
 				});
 
                 if($composerRepository->findPackage($name, $composerRequire->getConstraint())){
